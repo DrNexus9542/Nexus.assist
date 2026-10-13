@@ -101,29 +101,30 @@ print(f"Awaiting for your command : '{WAKE_WORD_MODEL}'...")
 try:
   while True:
     # Lecture
-    data = mic_stream.read(CHUNK, exception_on_overflow=False)
-    audio_frame = np.frombuffer(data, dtype=np.int16).astype(np.float32)
-    audio_frame = np.clip(audio_frame * GAIN, -32768, 32767).astype(np.int16)
-    # Analyse
-    prediction = owwModel.predict(audio_frame)
-
-    # Récupération score
-    score = prediction.get("Hey_Nexus", 0)
-
-    # Affichage optionnel
-    print(f"Score : {score:.2f}   ", end="\r")
-
-    # score dépasse seuil déclenchement
+    #data = mic_stream.read(CHUNK, exception_on_overflow=False)
+    #audio_frame = np.frombuffer(data, dtype=np.int16).astype(np.float32)
+    #audio_frame = np.clip(audio_frame * GAIN, -32768, 32767).astype(np.int16)
+    ## Analyse
+    #prediction = owwModel.predict(audio_frame)
+#
+    ## Récupération score
+    #score = prediction.get("Hey_Nexus", 0)
+#
+    ## Affichage optionnel
+    #print(f"Score : {score:.2f}   ", end="\r")
+#
+    ## score dépasse seuil déclenchement
+    score = 1
     if score > 0.5:
       print(f"\nWake Word détecté ! (Score : {score:.2f})")
 
       # --- ICI : SUITE ---
       # 1. Couper//mettre en pause wake word
       # 2. Enregistrer phrase (ex: 5 secondes)
-      STT("voice_demo.mp", "fr")
+      transcription = STT("voice_demo.mp3", "fr")
       print("Transcription :", transcription)
 
-      commande = interpreter_commande(transcripted_text)
+      commande = interpreter_commande(transcription)
       print(f"Action à effectuer :{interpreter_commande(transcription)}")
 
 
