@@ -47,6 +47,12 @@ pyCHANNELS = 1 if sys.platform == 'darwin' else 2
 pyRATE = 44100
 pyRECORD_SECONDS = 5
 
+# STT : code
+def STT(file,lang):
+  segments, info = model.transcribe(file, language=lang)
+  text = "".join(segment.text for segment in segments).strip()
+  return text
+
 # AI : code
 def interpreter_commande(texte_utilisateur: str) -> str:
   prompt_systeme = f"""
@@ -114,8 +120,12 @@ try:
       # --- ICI : SUITE ---
       # 1. Couper//mettre en pause wake word
       # 2. Enregistrer phrase (ex: 5 secondes)
-      # 3. Envoyer à Faster-Whisper (STT)
-      interpreter_commande(transcripted_text)
+      STT("voice_demo.mp", "fr")
+      print("Transcription :", transcription)
+
+      commande = interpreter_commande(transcripted_text)
+      print(f"Action à effectuer :{interpreter_commande(transcription)}")
+
 
 except KeyboardInterrupt:
   print("\nArrêt de l'assistant par l'utilisateur.")

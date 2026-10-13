@@ -19,3 +19,4 @@
 - numpy
 - openwakeword
 - faster-whisper
+- av version 19 (av<19)
