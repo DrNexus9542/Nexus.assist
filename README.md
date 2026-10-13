@@ -10,3 +10,12 @@
 - STT
 - Comprehension IA (Qwen 2.5:3B)
 - reconnaissance biométrique voix
+
+## Dépendances :
+
+- PyAudio
+- pyTorch
+- Ollama
+- numpy
+- openwakeword
+- faster-whisper
