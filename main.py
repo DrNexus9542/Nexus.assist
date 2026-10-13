@@ -54,8 +54,8 @@ def STT(file,lang):
   return text
 
 # AI : code
-def interpreter_commande(texte_utilisateur: str) -> str:
-  prompt_systeme = f"""
+def interpreter_commande(text_user: str) -> str:
+  prompt_system = f"""
     Tu es le module d'intelligence d'un assistant vocal. Ton unique rôle est d'analyser la phrase de l'utilisateur et de l'associer à l'une de ces commandes :
     {json.dumps(COMMANDS_CATALOG, ensure_ascii=False, indent=2)}
     
@@ -69,8 +69,8 @@ def interpreter_commande(texte_utilisateur: str) -> str:
     response = ollama.chat(
         model="qwen2.5:3b", 
         messages=[
-            {"role": "system", "content": prompt_systeme},
-            {"role": "user", "content": texte_utilisateur},
+            {"role": "system", "content": prompt_system},
+            {"role": "user", "content": text_user},
         ],
         options={
             "temperature": 0.0
