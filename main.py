@@ -1,5 +1,7 @@
 import sys
 import os
+import time
+from random import randint
 OS = sys.platform
 
 ## Wake word
@@ -34,12 +36,17 @@ COMMANDS_CATALOG = {
     "inconnu": "Si aucune commande ne correspond à la demande",
 }
 
+# Liste extraits audio test IA
+demo_audio = ["voice_demo.mp3", "voice_test.mp3", "voice_test1.mp3", "voice_test2.mp3", "voice_test3.mp3", "voice_test4.mp3", ]
+
 # Paramètres audio Wake word
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
 CHUNK = 1280
 GAIN = 4
+WAKE_THRESHOLD = 0.5
+WAKE_RESET_THRESHOLD = 0.2
 
 # Paramètres audio pyaudio 
 pyCHUNK = 1024
@@ -100,9 +107,11 @@ mic_stream = audio.open(
     frames_per_buffer=CHUNK,
 )
 
-print(f"Awaiting for your command : '{WAKE_WORD_MODEL}'...")
-
+print(f"Awaiting for your command : '{WAKE_WORD_MODEL}'...", flush=True)
+count = 0
 try:
+    print("Boucle d'écoute démarrée.", flush=True)
+    wake_word_armed = True
     while True:
         # Lecture
         data = mic_stream.read(CHUNK, exception_on_overflow=False)
@@ -114,27 +123,33 @@ try:
         # Récupération score
         score = prediction.get("Hey_Nexus", 0)
 
-        # Affichage optionnel
-        print(f"Score : {score:.2f}   ", end="\r")
-
-        # score dépasse seuil déclenchement
-        if score > 0.5:
+        # Déclenche 1 seule fois jusqu'à score repasse sous seuil
+        if wake_word_armed and score > WAKE_THRESHOLD:
+            wake_word_armed = False
             print(f"\nWake Word détecté ! (Score : {score:.2f})")
 
             mic_stream.stop_stream()
             try:
-                transcripted_text = stt("voice_demo.mp", "fr")
+                transcripted_text = stt(randint, "fr")
                 # --- ICI : SUITE ---
                 # 2. Enregistrer phrase (ex: 5 secondes)
                 print("Transcription :", transcripted_text)
 
                 commande = interpreter_commande(transcripted_text)
-                print(f"Action à effectuer :{interpreter_commande(transcripted_text)}")
+                print(f"Action à effectuer : {commande}")
             finally:
                 mic_stream.start_stream()
 
+            time.sleep(0.2)
+
+        elif not wake_word_armed and score < WAKE_RESET_THRESHOLD:
+            wake_word_armed = True
+            score = 0.0
+
 except KeyboardInterrupt:
     print("\nArrêt de l'assistant par l'utilisateur.")
+except Exception as e:
+    print(f"Erreur d'assistant : {e}")
 finally:
     mic_stream.stop_stream()
     mic_stream.close()

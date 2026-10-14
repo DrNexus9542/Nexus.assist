@@ -1,2 +1,6 @@
 *test*
-.venv
+.venv/
+.idea/
+*.tflite
+__pycache__/
+.env
