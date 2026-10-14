@@ -37,7 +37,7 @@ COMMANDS_CATALOG = {
 }
 
 # Liste extraits audio test IA
-demo_audio = ["voice_demo.mp3", "voice_test.mp3", "voice_test1.mp3", "voice_test2.mp3", "voice_test3.mp3", "voice_test4.mp3", ]
+demo_audio = ["voice_demo.mp3", "voice_demo1.mp3", "voice_demo2.mp3", "voice_demo3.mp3", "voice_demo4.mp3", "voice_demo5.mp3", ]
 
 # Paramètres audio Wake word
 FORMAT = pyaudio.paInt16
