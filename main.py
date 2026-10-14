@@ -1,4 +1,6 @@
 import sys
+import os
+OS = sys.platform
 
 ## Wake word
 import numpy as np
@@ -86,6 +88,10 @@ def interpreter_commande(text_user: str) -> str:
   except Exception as e:
     print(f"Erreur lors de l'interprétation : {e}")
     return "inconnu"
+
+# Initialisation des commandes (dict de listes)
+commands = {"stop_assistant" : ["","0"]}
+print(commands["stop_assistant"][1])
 
 audio = pyaudio.PyAudio()
 mic_stream = audio.open(
