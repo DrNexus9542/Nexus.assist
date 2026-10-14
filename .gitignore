@@ -5,3 +5,4 @@
 __pycache__/
 .env
 Alfraide,_s'il_vous_plaît.onnx
+check_licenses.py
