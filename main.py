@@ -21,7 +21,7 @@ import ollama
 #import torch
 #from speechbrain.inference.speaker import SpeakerRecognition
 
-WAKE_WORD_MODEL = "Hey_Nexus.onnx"
+WAKE_WORD_MODEL = "ressources/Hey_Nexus.onnx"
 owwModel = Model(wakeword_models=[WAKE_WORD_MODEL])
 
 # Chargement de Whisper
@@ -130,7 +130,7 @@ try:
 
             mic_stream.stop_stream()
             try:
-                transcripted_text = stt(randint, "fr")
+                transcripted_text = stt(f"ressources/{demo_audio[randint(0, len(demo_audio))]}", "fr")
                 # --- ICI : SUITE ---
                 # 2. Enregistrer phrase (ex: 5 secondes)
                 print("Transcription :", transcripted_text)
