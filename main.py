@@ -1,4 +1,8 @@
 import sys
+import os
+import time
+from random import randint
+OS = sys.platform
 
 ## Wake word
 import numpy as np
@@ -17,7 +21,6 @@ import ollama
 #import torch
 #from speechbrain.inference.speaker import SpeakerRecognition
 
-openwakeword.utils.download_models()
 WAKE_WORD_MODEL = "Hey_Nexus.onnx"
 owwModel = Model(wakeword_models=[WAKE_WORD_MODEL])
 
@@ -26,12 +29,15 @@ model = WhisperModel("small", device="cpu", compute_type="int8")
 
 # liste commandes dispo IA
 COMMANDS_CATALOG = {
-  "allumer_lumiere": "Allumer ou élever la luminosité des lampes",
-  "couper_son": "Mettre en sourdine, couper le volume ou la musique",
-  "donner_meteo": "Demander les prévisions météo ou la température extérieure",
-  "lancer_musique": "Jouer de la musique ou un artiste spécifique",
-  "inconnu": "Si aucune commande ne correspond à la demande",
+    "allumer_lumiere": "Allumer ou élever la luminosité des lampes",
+    "couper_son": "Mettre en sourdine, couper le volume ou la musique",
+    "donner_meteo": "Demander les prévisions météo ou la température extérieure",
+    "lancer_musique": "Jouer de la musique ou un artiste spécifique",
+    "inconnu": "Si aucune commande ne correspond à la demande",
 }
+
+# Liste extraits audio test IA
+demo_audio = ["voice_demo.mp3", "voice_test.mp3", "voice_test1.mp3", "voice_test2.mp3", "voice_test3.mp3", "voice_test4.mp3", ]
 
 # Paramètres audio Wake word
 FORMAT = pyaudio.paInt16
@@ -39,6 +45,8 @@ CHANNELS = 1
 RATE = 16000
 CHUNK = 1280
 GAIN = 4
+WAKE_THRESHOLD = 0.5
+WAKE_RESET_THRESHOLD = 0.2
 
 # Paramètres audio pyaudio 
 pyCHUNK = 1024
@@ -48,14 +56,14 @@ pyRATE = 44100
 pyRECORD_SECONDS = 5
 
 # STT : code
-def STT(file,lang):
-  segments, info = model.transcribe(file, language=lang)
-  text = "".join(segment.text for segment in segments).strip()
-  return text
+def stt(file,lang):
+    segments, info = model.transcribe(file, language=lang)
+    text = "".join(segment.text for segment in segments).strip()
+    return text
 
 # AI : code
-def interpreter_commande(texte_utilisateur: str) -> str:
-  prompt_systeme = f"""
+def interpreter_commande(text_user: str) -> str:
+    prompt_system = f"""
     Tu es le module d'intelligence d'un assistant vocal. Ton unique rôle est d'analyser la phrase de l'utilisateur et de l'associer à l'une de ces commandes :
     {json.dumps(COMMANDS_CATALOG, ensure_ascii=False, indent=2)}
     
@@ -65,27 +73,30 @@ def interpreter_commande(texte_utilisateur: str) -> str:
     - Si la phrase ne correspond à rien, renvoie "inconnu".
     """
 
-  try:
-    response = ollama.chat(
-        model="qwen2.5:3b", 
-        messages=[
-            {"role": "system", "content": prompt_systeme},
-            {"role": "user", "content": texte_utilisateur},
-        ],
-        options={
-            "temperature": 0.0
-        },  
-    )
+    try:
+        response = ollama.chat(
+            model="qwen2.5:3b",
+            messages=[
+                {"role": "system", "content": prompt_system},
+                {"role": "user", "content": text_user},
+            ],
+            options={
+                "temperature": 0.0
+            },
+        )
+        #print(response)
+        content = response["message"]["content"].strip()
+        #print(content)
+        data = json.loads(content)
+        return data.get("instruction", "inconnu")
 
-    #print(response)
-    content = response["message"]["content"].strip()
-    #print(content)
-    data = json.loads(content)
-    return data.get("instruction", "inconnu")
+    except Exception as e:
+        print(f"Erreur lors de l'interprétation : {e}")
+        return "inconnu"
 
-  except Exception as e:
-    print(f"Erreur lors de l'interprétation : {e}")
-    return "inconnu"
+# Initialisation des commandes (dict de listes)
+commands = {"stop_assistant" : ["","0"]}
+print(commands["stop_assistant"][1])
 
 audio = pyaudio.PyAudio()
 mic_stream = audio.open(
@@ -96,41 +107,50 @@ mic_stream = audio.open(
     frames_per_buffer=CHUNK,
 )
 
-print(f"Awaiting for your command : '{WAKE_WORD_MODEL}'...")
-
+print(f"Awaiting for your command : '{WAKE_WORD_MODEL}'...", flush=True)
+count = 0
 try:
-  while True:
-    # Lecture
-    #data = mic_stream.read(CHUNK, exception_on_overflow=False)
-    #audio_frame = np.frombuffer(data, dtype=np.int16).astype(np.float32)
-    #audio_frame = np.clip(audio_frame * GAIN, -32768, 32767).astype(np.int16)
-    ## Analyse
-    #prediction = owwModel.predict(audio_frame)
-#
-    ## Récupération score
-    #score = prediction.get("Hey_Nexus", 0)
-#
-    ## Affichage optionnel
-    #print(f"Score : {score:.2f}   ", end="\r")
-#
-    ## score dépasse seuil déclenchement
-    score = 1
-    if score > 0.5:
-      print(f"\nWake Word détecté ! (Score : {score:.2f})")
+    print("Boucle d'écoute démarrée.", flush=True)
+    wake_word_armed = True
+    while True:
+        # Lecture
+        data = mic_stream.read(CHUNK, exception_on_overflow=False)
+        audio_frame = np.frombuffer(data, dtype=np.int16).astype(np.float32)
+        audio_frame = np.clip(audio_frame * GAIN, -32768, 32767).astype(np.int16)
+        # Analyse
+        prediction = owwModel.predict(audio_frame)
 
-      # --- ICI : SUITE ---
-      # 1. Couper//mettre en pause wake word
-      # 2. Enregistrer phrase (ex: 5 secondes)
-      transcription = STT("voice_demo.mp3", "fr")
-      print("Transcription :", transcription)
+        # Récupération score
+        score = prediction.get("Hey_Nexus", 0)
 
-      commande = interpreter_commande(transcription)
-      print(f"Action à effectuer :{interpreter_commande(transcription)}")
+        # Déclenche 1 seule fois jusqu'à score repasse sous seuil
+        if wake_word_armed and score > WAKE_THRESHOLD:
+            wake_word_armed = False
+            print(f"\nWake Word détecté ! (Score : {score:.2f})")
 
+            mic_stream.stop_stream()
+            try:
+                transcripted_text = stt(randint, "fr")
+                # --- ICI : SUITE ---
+                # 2. Enregistrer phrase (ex: 5 secondes)
+                print("Transcription :", transcripted_text)
+
+                commande = interpreter_commande(transcripted_text)
+                print(f"Action à effectuer : {commande}")
+            finally:
+                mic_stream.start_stream()
+
+            time.sleep(0.2)
+
+        elif not wake_word_armed and score < WAKE_RESET_THRESHOLD:
+            wake_word_armed = True
+            score = 0.0
 
 except KeyboardInterrupt:
-  print("\nArrêt de l'assistant par l'utilisateur.")
+    print("\nArrêt de l'assistant par l'utilisateur.")
+except Exception as e:
+    print(f"Erreur d'assistant : {e}")
 finally:
-  mic_stream.stop_stream()
-  mic_stream.close()
-  audio.terminate()
+    mic_stream.stop_stream()
+    mic_stream.close()
+    audio.terminate()
