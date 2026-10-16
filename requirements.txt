@@ -1,0 +1,6 @@
+numpy
+openwakeword
+pyaudio
+faster-whisper
+ollama
+nv<19

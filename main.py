@@ -1,3 +1,21 @@
+# -----------------------------------------------------------------------------
+# Nexus.assist
+# Copyright (C) 2026 DrNexus
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+# -----------------------------------------------------------------------------
+
 import sys
 import os
 import time
@@ -21,7 +39,7 @@ import ollama
 #import torch
 #from speechbrain.inference.speaker import SpeakerRecognition
 
-WAKE_WORD_MODEL = "Hey_Nexus.onnx"
+WAKE_WORD_MODEL = "ressources/Hey_Nexus.onnx"
 owwModel = Model(wakeword_models=[WAKE_WORD_MODEL])
 
 # Chargement de Whisper
@@ -37,7 +55,7 @@ COMMANDS_CATALOG = {
 }
 
 # Liste extraits audio test IA
-demo_audio = ["voice_demo.mp3", "voice_test.mp3", "voice_test1.mp3", "voice_test2.mp3", "voice_test3.mp3", "voice_test4.mp3", ]
+demo_audio = ["voice_demo.mp3", "voice_demo1.mp3", "voice_demo2.mp3", "voice_demo3.mp3", "voice_demo4.mp3", "voice_demo5.mp3", ]
 
 # Paramètres audio Wake word
 FORMAT = pyaudio.paInt16
@@ -130,7 +148,7 @@ try:
 
             mic_stream.stop_stream()
             try:
-                transcripted_text = stt(randint, "fr")
+                transcripted_text = stt(f"ressources/{demo_audio[randint(0, len(demo_audio))]}", "fr")
                 # --- ICI : SUITE ---
                 # 2. Enregistrer phrase (ex: 5 secondes)
                 print("Transcription :", transcripted_text)
