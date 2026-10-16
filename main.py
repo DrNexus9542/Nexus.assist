@@ -5,7 +5,7 @@
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,6 +20,7 @@ import sys
 import os
 import time
 from random import randint
+
 OS = sys.platform
 
 ## Wake word
@@ -40,8 +41,8 @@ import json
 import ollama
 
 ## SpeechBrain
-#import torch
-#from speechbrain.inference.speaker import SpeakerRecognition
+# import torch
+# from speechbrain.inference.speaker import SpeakerRecognition
 
 WAKE_WORD_MODEL = "ressources/Hey_Nexus.onnx"
 owwModel = Model(wakeword_models=[WAKE_WORD_MODEL])
@@ -59,7 +60,8 @@ COMMANDS_CATALOG = {
 }
 
 # Liste extraits audio test IA
-demo_audio = ["voice_demo.mp3", "voice_demo1.mp3", "voice_demo2.mp3", "voice_demo3.mp3", "voice_demo4.mp3", "voice_demo5.mp3", ]
+demo_audio = ["voice_demo.mp3", "voice_demo1.mp3", "voice_demo2.mp3", "voice_demo3.mp3", "voice_demo4.mp3",
+              "voice_demo5.mp3", ]
 
 # Paramètres audio Wake word
 FORMAT = pyaudio.paInt16
@@ -76,8 +78,9 @@ pyFORMAT = pyaudio.paInt16
 pyCHANNELS = 1
 pyRATE = 44100
 
+
 # Record : code
-def record(rate,time ):
+def record(rate, time):
     frame_count = int(time * rate)
     audio = sd.rec(frame_count,
                    samplerate=pyRATE,
@@ -95,19 +98,22 @@ def record(rate,time ):
 
 
 record(44100, 1)
+
+
 # STT : code
-def stt(file,lang):
+def stt(file, lang):
     segments, info = model.transcribe(file, language=lang)
     text = "".join(segment.text for segment in segments).strip()
     os.remove(file)
     return text
+
 
 # AI : code
 def interpreter_commande(text_user: str) -> str:
     prompt_system = f"""
     Tu es le module d'intelligence d'un assistant vocal. Ton unique rôle est d'analyser la phrase de l'utilisateur et de l'associer à l'une de ces commandes :
     {json.dumps(COMMANDS_CATALOG, ensure_ascii=False, indent=2)}
-    
+
     Règles strictes :
     - Réponds UNIQUEMENT au format JSON valide, sans markdown (pas de ```json), avec cette structure exacte :
     {{"instruction": "nom_de_la_commande"}}
@@ -125,9 +131,7 @@ def interpreter_commande(text_user: str) -> str:
                 "temperature": 0.0
             },
         )
-        #print(response)
         content = response["message"]["content"].strip()
-        #print(content)
         data = json.loads(content)
         return data.get("instruction", "inconnu")
 
@@ -135,8 +139,9 @@ def interpreter_commande(text_user: str) -> str:
         print(f"Erreur lors de l'interprétation : {e}")
         return "inconnu"
 
+
 # Initialisation des commandes (dict de listes)
-commands = {"stop_assistant" : ["","0"]}
+commands = {"stop_assistant": ["", "0"]}
 print(commands["stop_assistant"][1])
 
 audio = pyaudio.PyAudio()
@@ -170,10 +175,10 @@ try:
             print(f"\nWake Word détecté ! (Score : {score:.2f})")
 
             mic_stream.stop_stream()
+            record(44100, 5)
             try:
-                transcripted_text = stt(f"ressources/{demo_audio[randint(0, len(demo_audio))]}", "fr")
-                # --- ICI : SUITE ---
-                record(44100, 5)
+                transcripted_text = stt(f"record.wav", "fr")
+                # transcripted_text = stt(f"ressources/{demo_audio[randint(0, len(demo_audio))]}", "fr")
                 print("Transcription :", transcripted_text)
 
                 commande = interpreter_commande(transcripted_text)
