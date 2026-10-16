@@ -27,6 +27,10 @@ import numpy as np
 import openwakeword
 from openwakeword.model import Model
 
+## Record
+import sounddevice as sd
+import wave
+
 ## STT
 import pyaudio
 from faster_whisper import WhisperModel
@@ -69,14 +73,33 @@ WAKE_RESET_THRESHOLD = 0.2
 # Paramètres audio pyaudio 
 pyCHUNK = 1024
 pyFORMAT = pyaudio.paInt16
-pyCHANNELS = 1 if sys.platform == 'darwin' else 2
+pyCHANNELS = 1
 pyRATE = 44100
-pyRECORD_SECONDS = 5
 
+# Record : code
+def record(rate,time ):
+    frame_count = int(time * rate)
+    audio = sd.rec(frame_count,
+                   samplerate=pyRATE,
+                   channels=CHANNELS,
+                   dtype="int16")
+    sd.wait()
+    peak = int(np.abs(audio).max())
+    if peak == 0:
+        print("WARNING: No sound recorded, microphone may not work.")
+    with wave.open("record.wav", "wb") as wav:
+        wav.setnchannels(CHANNELS)
+        wav.setsampwidth(2)
+        wav.setframerate(rate)
+        wav.writeframes(audio.tobytes())
+
+
+record(44100, 1)
 # STT : code
 def stt(file,lang):
     segments, info = model.transcribe(file, language=lang)
     text = "".join(segment.text for segment in segments).strip()
+    os.remove(file)
     return text
 
 # AI : code
@@ -138,7 +161,7 @@ try:
         # Analyse
         prediction = owwModel.predict(audio_frame)
 
-        # Récupération score
+        # Recup score
         score = prediction.get("Hey_Nexus", 0)
 
         # Déclenche 1 seule fois jusqu'à score repasse sous seuil
@@ -150,7 +173,7 @@ try:
             try:
                 transcripted_text = stt(f"ressources/{demo_audio[randint(0, len(demo_audio))]}", "fr")
                 # --- ICI : SUITE ---
-                # 2. Enregistrer phrase (ex: 5 secondes)
+                record(44100, 5)
                 print("Transcription :", transcripted_text)
 
                 commande = interpreter_commande(transcripted_text)

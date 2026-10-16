@@ -4,3 +4,4 @@ pyaudio
 faster-whisper
 ollama
 nv<19
+sounddevice
