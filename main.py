@@ -52,14 +52,13 @@ model = WhisperModel("small", device="cpu", compute_type="int8")
 # liste commandes dispo IA
 COMMANDS_CATALOG = {
     "allumer_lumiere": "Allumer ou élever la luminosité des lampes",
+    "eteindre_lumière": "éteindre ou diminuer la luminosité des lampes",
     "couper_son": "Mettre en sourdine, couper le volume ou la musique",
     "donner_meteo": "Demander les prévisions météo ou la température extérieure",
     "lancer_musique": "Jouer de la musique ou un artiste spécifique",
     "inconnu": "Si aucune commande ne correspond à la demande",
+    "stop_assist": "Si l'utilisateur demande explicitement la fermeture ou l'arrêt de l'assistant",
 }
-
-# Liste extraits audio test IA
-demo_audio = ["voice_demo.mp3", "voice_demo1.mp3", "voice_demo2.mp3", "voice_demo3.mp3", "voice_demo4.mp3", "voice_demo5.mp3", ]
 
 # Paramètres audio Wake word
 FORMAT = pyaudio.paInt16
@@ -171,13 +170,17 @@ try:
 
             mic_stream.stop_stream()
             try:
-                transcripted_text = stt(f"ressources/{demo_audio[randint(0, len(demo_audio))]}", "fr")
-                # --- ICI : SUITE ---
                 record(44100, 5)
+                #transcripted_text = stt("ressources\", "fr")  #mettre nom de fichier (https://airvoz.com/fr/text-to-speech/ pour test sans utilisation micro)
+                transcripted_text = stt("record.wav", "fr")
                 print("Transcription :", transcripted_text)
 
                 commande = interpreter_commande(transcripted_text)
                 print(f"Action à effectuer : {commande}")
+                if commande == "inconnu":
+                    print("Aucune commande reconnue.")
+                elif commande == "stop_assist":
+                    break
             finally:
                 mic_stream.start_stream()
 
